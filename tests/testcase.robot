@@ -4,10 +4,22 @@ Library  String
 Library  ../src/RequestsLibrary/RequestsKeywords.py
 Library  OperatingSystem
 Library  customAuthenticator.py
+Resource  res_setup.robot
 
-Suite Teardown  Delete All Sessions
+Suite Setup     Setup Flask Http Server
+Suite Teardown  Teardown Flask Http Server And Sessions
 
 *** Test Cases ***
+Readme Test
+    [Tags]  get
+    Create Session    github         http://api.github.com
+    Create Session    google         http://www.google.com
+    ${resp}=          Get Request    google               /
+    Status Should Be  200            ${resp}
+    ${resp}=          Get Request    github               /users/bulkan
+    Request Should Be Successful     ${resp}
+    Dictionary Should Contain Value  ${resp.json()}       Bulkan Evcimen
+
 Get Requests
     [Tags]  get    skip
     Create Session  google  http://www.google.com
@@ -285,76 +297,6 @@ Patch Requests with Json Data
     ${jsondata}=  To Json  ${resp.content}
     Should Be Equal     ${jsondata['json']}     ${data}
 
-Get Request With Redirection
-    [Tags]  get
-    Create Session  httpbin  http://httpbin.org    debug=3
-    ${resp}=  Get Request  httpbin  /redirect/1
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-    ${resp}=  Get Request  httpbin  /redirect/1  allow_redirects=${true}
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-Get Request Without Redirection
-    [Tags]  get
-    Create Session  httpbin  http://httpbin.org
-    ${resp}=  Get Request  httpbin  /redirect/1  allow_redirects=${false}
-    ${status}=  Convert To String  ${resp.status_code}
-    Should Start With  ${status}  30
-
-Options Request With Redirection
-    [Tags]  options
-    Create Session  httpbin  http://httpbin.org
-    ${resp}=  Options Request  httpbin  /redirect/1
-    Should Be Equal As Strings  ${resp.status_code}  200
-    ${resp}=  Options Request  httpbin  /redirect/1  allow_redirects=${true}
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-Head Request With Redirection
-    [Tags]  head
-    Create Session  httpbin  http://httpbin.org
-    ${resp}=  Head Request  httpbin  /redirect/1  allow_redirects=${true}
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-Head Request Without Redirection
-    [Tags]  head
-    Create Session  httpbin  http://httpbin.org
-    ${resp}=  Head Request  httpbin  /redirect/1
-    ${status}=  Convert To String  ${resp.status_code}
-    Should Start With  ${status}  30
-    ${resp}=  Head Request  httpbin  /redirect/1  allow_redirects=${false}
-    ${status}=  Convert To String  ${resp.status_code}
-    Should Start With  ${status}  30
-
-Post Request With Redirection
-    [Tags]  post
-    Create Session  jigsaw  http://jigsaw.w3.org
-    ${resp}=  Post Request  jigsaw  /HTTP/300/302.html
-    Should Be Equal As Strings  ${resp.status_code}  200
-    ${resp}=  Post Request  jigsaw  /HTTP/300/302.html  allow_redirects=${true}
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-Post Request Without Redirection
-    [Tags]  post
-    Create Session  jigsaw  http://jigsaw.w3.org    debug=3
-    ${resp}=  Post Request  jigsaw  /HTTP/300/302.html  allow_redirects=${false}
-    ${status}=  Convert To String  ${resp.status_code}
-    Should Start With  ${status}  30
-
-Put Request With Redirection
-    [Tags]  put
-    Create Session  jigsaw  http://jigsaw.w3.org    debug=3
-    ${resp}=  Put Request  jigsaw  /HTTP/300/302.html
-    Should Be Equal As Strings  ${resp.status_code}  200
-    ${resp}=  Put Request  jigsaw  /HTTP/300/302.html  allow_redirects=${true}
-    Should Be Equal As Strings  ${resp.status_code}  200
-
-Put Request Without Redirection
-    [Tags]  put
-    Create Session  jigsaw  http://jigsaw.w3.org
-    ${resp}=  Put Request  jigsaw  /HTTP/300/302.html  allow_redirects=${false}
-    ${status}=  Convert To String  ${resp.status_code}
-    Should Start With  ${status}  30
-
 Do Not Pretty Print a JSON object
     [Tags]    json
     Comment    Define json variable.
@@ -387,8 +329,8 @@ Set Pretty Print to non-Boolean value
 
 Create a session and make sure it exists
     [Tags]    session
-    Create Session     jigsaw2  http://jigsaw.w3.org
-    ${exists}=         Session Exists    jigsaw2
+    Create Session     existing_session  ${HTTP_LOCAL_SERVER}
+    ${exists}=         Session Exists    existing_session
     Should Be True     ${exists}
 
 Verify a non existing session
